@@ -1,42 +1,23 @@
-
 import type { Student } from "./types"
-import Card from "./components/Card"
-import Badge from "./components/Badge"
-import Avatar from "./components/Avatar"
+import ProfileCard from "./components/ProfileCard"
 
-const student: Student = {
-  id: "1",
-  name: "Aisha Khan",
-  role: "Frontend Student",
-  skills: ["HTML", "CSS", "JavaScript"],
-}
+const students: Student[] = [
+  { id: "s1", name: "Aisha Khan", role: "Frontend Student", skills: ["HTML", "CSS", "JS"] },
+  { id: "s2", name: "Rohit Verma", role: "Frontend Student", skills: ["HTML", "Tailwind"] },
+  { id: "s3", name: "Sara Ali", role: "JS Learner", skills: ["JavaScript", "DOM"] },
+  { id: "s4", name: "Dev Patel", role: "Frontend Student", skills: ["CSS", "React basics"] },
+  { id: "s5", name: "Meera Nair", role: "Designer + Coder", skills: ["Figma", "HTML"] },
+  { id: "s6", name: "Arjun Shah", role: "React Learner", skills: ["React", "TypeScript"]},
+]
 
 function App() {
   return (
     <div className="min-h-screen bg-slate-900 p-8 text-slate-100">
-      <Card>
-        <div className="flex items-center gap-4">
-          <Avatar name={student.name} />
-          <div>
-            <h2 className="text-2xl font-bold">
-              {student.name.toUpperCase()}
-            </h2>
-            <p className="text-slate-400">{student.role}</p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-  {student.skills.map((skill: string) => (
-  <Badge key={skill} text={skill} />
-))}
-        </div>
-      </Card>
-
-      <Card>
-        <h2 className="text-xl font-bold">My Projects</h2>
-        <p>Project 1: Student Profile</p>
-        <p>Project 2: React Practice</p>
-      </Card>
+      <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+        {students.map((student) => (
+          <ProfileCard key={student.id} student={student} />
+        ))}
+      </div>
     </div>
   )
 }
