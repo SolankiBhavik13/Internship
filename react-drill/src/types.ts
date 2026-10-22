@@ -2,6 +2,6 @@
 export type Student = {
   id: string
   name: string
-  role: string
-  skills: string[]
+  rollNumber: string
+  validTill: number
 }

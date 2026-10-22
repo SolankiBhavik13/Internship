@@ -1,21 +1,32 @@
+
 import type { Student } from "./types"
-import ProfileCard from "./components/ProfileCard"
+import IdCard from "./components/IdCard"
 
 const students: Student[] = [
-  { id: "s1", name: "Aisha Khan", role: "Frontend Student", skills: ["HTML", "CSS", "JS"] },
-  { id: "s2", name: "Rohit Verma", role: "Frontend Student", skills: ["HTML", "Tailwind"] },
-  { id: "s3", name: "Sara Ali", role: "JS Learner", skills: ["JavaScript", "DOM"] },
-  { id: "s4", name: "Dev Patel", role: "Frontend Student", skills: ["CSS", "React basics"] },
-  { id: "s5", name: "Meera Nair", role: "Designer + Coder", skills: ["Figma", "HTML"] },
-  { id: "s6", name: "Arjun Shah", role: "React Learner", skills: ["React", "TypeScript"]},
+  { id: "s1", name: "Aisha Khan", rollNumber: "RB001", validTill: 2026 },
+  { id: "s2", name: "Rohit Verma", rollNumber: "RB002", validTill: 2026 },
+  { id: "s3", name: "Sara Ali", rollNumber: "RB003", validTill: 2027 },
+  { id: "s4", name: "Dev Patel", rollNumber: "RB004", validTill: 2027 },
+  { id: "s5", name: "Meera Nair", rollNumber: "RB005", validTill: 2027 },
+  { id: "s6", name: "Arjun Shah", rollNumber: "RB006", validTill: 2028 },
 ]
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-900 p-8 text-slate-100">
-      <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
+    <div className="min-h-screen bg-slate-900 p-6 text-slate-100 sm:p-8">
+      <header className="mx-auto mb-8 max-w-6xl">
+        <h1 className="text-3xl font-bold">
+          Student ID Card Gallery
+        </h1>
+
+        <p className="mt-2 text-slate-400">
+          {students.length} students enrolled
+        </p>
+      </header>
+
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {students.map((student) => (
-          <ProfileCard key={student.id} student={student} />
+          <IdCard key={student.id} student={student} />
         ))}
       </div>
     </div>
