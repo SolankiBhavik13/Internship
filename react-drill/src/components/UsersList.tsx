@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 
+// Step 1: Define User type
 type User = {
   id: number
   name: string
@@ -10,10 +11,12 @@ type User = {
 }
 
 function UsersList() {
+  // Step 2: Three states
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Step 3: Fetch API data
   useEffect(() => {
     async function loadUsers() {
       try {
@@ -26,13 +29,16 @@ function UsersList() {
         }
 
         const data = (await response.json()) as User[]
+
         setUsers(data)
-      } catch (err) {
+
+      } catch (err: unknown) {
         setError(
           err instanceof Error
             ? err.message
             : "Could not load users"
         )
+
       } finally {
         setLoading(false)
       }
@@ -41,7 +47,7 @@ function UsersList() {
     loadUsers()
   }, [])
 
-  // Step 03: Handle loading and error states
+  // Step 4: Loading state
   if (loading) {
     return (
       <p className="p-8 text-slate-400">
@@ -50,6 +56,7 @@ function UsersList() {
     )
   }
 
+  // Step 5: Error state
   if (error) {
     return (
       <p className="p-8 text-red-400">
@@ -58,18 +65,22 @@ function UsersList() {
     )
   }
 
-  // Step 04 and 06: Display users and count
+  // Step 6: Display users
   return (
     <div className="mx-auto max-w-3xl p-6">
+
       <h1 className="mb-2 text-3xl font-bold">
         Users List
       </h1>
 
+      {/* User count */}
       <p className="mb-5 text-slate-400">
         {users.length} users loaded
       </p>
 
+      {/* User cards */}
       <div className="grid gap-4 sm:grid-cols-2">
+
         {users.map((user) => (
           <div
             key={user.id}
@@ -79,7 +90,7 @@ function UsersList() {
               {user.name}
             </h2>
 
-            <p className="mt-1 text-sm text-blue-400">
+            <p className="mt-2 text-sm text-blue-400">
               {user.email}
             </p>
 
@@ -88,6 +99,7 @@ function UsersList() {
             </p>
           </div>
         ))}
+
       </div>
     </div>
   )
