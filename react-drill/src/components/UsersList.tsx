@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react"
 
 type User = {
@@ -9,7 +10,7 @@ type User = {
   }
 }
 
-// 01. Spinner component
+// Spinner component
 function Spinner() {
   return (
     <div className="mx-auto mt-16 h-10 w-10 animate-spin rounded-full border-4 border-slate-600 border-t-indigo-400" />
@@ -17,13 +18,11 @@ function Spinner() {
 }
 
 function UsersList() {
-  // 02. States
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
-  // API fetching
   useEffect(() => {
     async function loadUsers() {
       try {
@@ -39,9 +38,7 @@ function UsersList() {
         setUsers(data)
       } catch (err: unknown) {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Could not load users"
+          err instanceof Error ? err.message : "Could not load users"
         )
       } finally {
         setLoading(false)
@@ -51,13 +48,13 @@ function UsersList() {
     loadUsers()
   }, [])
 
-  // 03. Filter users before return
+  // Derived filtered list
   const q = search.trim().toLowerCase()
 
   const filtered = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+    (user) =>
+      user.name.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q)
   )
 
   // Loading state
@@ -67,26 +64,19 @@ function UsersList() {
 
   // Error state
   if (error) {
-    return (
-      <p className="p-8 text-red-400">
-        {error}
-      </p>
-    )
+    return <p className="p-8 text-red-400">{error}</p>
   }
 
   return (
     <div className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-2 text-3xl font-bold">Users List</h1>
 
-      <h1 className="mb-2 text-3xl font-bold">
-        Users List
-      </h1>
-
-      {/* 05. Dynamic result count */}
+      {/* Counts line */}
       <p className="mb-4 text-sm text-slate-400">
         Showing {filtered.length} of {users.length} users
       </p>
 
-      {/* 02. Controlled search input */}
+      {/* Controlled search input */}
       <input
         type="text"
         value={search}
@@ -95,7 +85,7 @@ function UsersList() {
         className="mb-6 w-full rounded-xl border border-slate-600 bg-slate-800 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
 
-      {/* 04. Two empty messages */}
+      {/* Empty messages */}
       {filtered.length === 0 && (
         <p className="p-8 text-center text-slate-400">
           {users.length === 0
@@ -104,16 +94,14 @@ function UsersList() {
         </p>
       )}
 
-      {/* 03. Display filtered users */}
+      {/* User cards */}
       <div className="grid gap-4 sm:grid-cols-2">
         {filtered.map((user) => (
           <div
             key={user.id}
             className="rounded-xl bg-slate-800 p-5 shadow-lg"
           >
-            <h2 className="font-bold text-white">
-              {user.name}
-            </h2>
+            <h2 className="font-bold text-white">{user.name}</h2>
 
             <p className="mt-2 text-sm text-indigo-400">
               {user.email}
@@ -125,7 +113,6 @@ function UsersList() {
           </div>
         ))}
       </div>
-
     </div>
   )
 }
