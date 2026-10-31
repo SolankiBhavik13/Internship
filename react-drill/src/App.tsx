@@ -1,6 +1,10 @@
 
 import { useEffect, useState } from "react"
 
+// Reflection:
+// I need to lift state up when two or more sibling components
+// need to access or update the same data.
+
 type User = {
   id: number
   name: string
@@ -10,12 +14,91 @@ type User = {
   }
 }
 
+// Spinner component
 function Spinner() {
   return (
     <div className="mx-auto mt-16 h-10 w-10 animate-spin rounded-full border-4 border-slate-600 border-t-indigo-400" />
   )
 }
 
+// SearchBar: receives value and onChange through props
+function SearchBar({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (newValue: string) => void
+}) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Search by name or email"
+      className="w-full rounded-lg bg-slate-800 px-4 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    />
+  )
+}
+
+// UserList: receives data through props, with no state of its own
+function UserList({
+  users,
+  filtered,
+  loading,
+  error,
+}: {
+  users: User[]
+  filtered: User[]
+  loading: boolean
+  error: string | null
+}) {
+  if (loading) {
+    return <Spinner />
+  }
+
+  if (error) {
+    return <p className="mt-6 text-red-400">{error}</p>
+  }
+
+  if (users.length === 0) {
+    return (
+      <p className="mt-6 text-center text-slate-400">
+        No users found on the server.
+      </p>
+    )
+  }
+
+  if (filtered.length === 0) {
+    return (
+      <p className="mt-6 text-center text-slate-400">
+        No users match your search - try another name.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      {filtered.map((user) => (
+        <div
+          key={user.id}
+          className="rounded-xl bg-slate-800 p-5 shadow-lg"
+        >
+          <h2 className="font-bold text-white">{user.name}</h2>
+
+          <p className="mt-2 text-sm text-indigo-400">
+            {user.email}
+          </p>
+
+          <p className="mt-3 text-xs text-slate-400">
+            {user.company.catchPhrase}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Parent component: owns all shared state and fetching
 function App() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,61 +130,40 @@ function App() {
     loadUsers()
   }, [])
 
-  // Filter users during render
+  // Compute filtered users during render (not in state)
   const q = search.trim().toLowerCase()
+
   const filtered = users.filter(
     (user) =>
       user.name.toLowerCase().includes(q) ||
       user.email.toLowerCase().includes(q)
   )
 
-  if (loading) {
-    return <Spinner />
-  }
-
-  if (error) {
-    return <p className="p-8 text-red-400">{error}</p>
-  }
-
   return (
     <div className="min-h-screen bg-slate-900 p-6 text-white">
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-2 text-3xl font-bold">Users List</h1>
+        <h1 className="mb-6 text-3xl font-bold">Users List</h1>
 
-        <p className="mb-4 text-sm text-slate-400">
-          Showing {filtered.length} of {users.length} users
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+            />
+          </div>
 
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or email"
-          className="mb-6 w-full rounded-xl border border-slate-600 bg-slate-800 p-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-
-        {filtered.length === 0 && (
-          <p className="p-8 text-center text-slate-400">
-            {users.length === 0
-              ? "No users found on the server."
-              : "No users match your search - try another name."}
+          {/* Second consumer of search/results data */}
+          <p className="text-sm text-slate-400">
+            Showing {filtered.length} of {users.length} users
           </p>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map((user) => (
-            <div
-              key={user.id}
-              className="rounded-xl bg-slate-800 p-5 shadow-lg"
-            >
-              <h2 className="font-bold">{user.name}</h2>
-              <p className="mt-2 text-sm text-indigo-400">{user.email}</p>
-              <p className="mt-3 text-xs text-slate-400">
-                {user.company.catchPhrase}
-              </p>
-            </div>
-          ))}
         </div>
+
+        <UserList
+          users={users}
+          filtered={filtered}
+          loading={loading}
+          error={error}
+        />
       </div>
     </div>
   )
