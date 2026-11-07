@@ -1,8 +1,9 @@
 
-import { createContext, useContext, useState } from 'react'
-import type { ReactNode } from 'react'
+import { createContext, useContext } from "react"
+import type { ReactNode } from "react"
+import useLocalStorage from "../hooks/useLocalStorage"
 
-type Theme = 'dark' | 'light'
+type Theme = "dark" | "light"
 
 type ThemeContextValue = {
   theme: Theme
@@ -12,18 +13,15 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(
-    (localStorage.getItem('theme') as Theme) || 'dark'
+  const [theme, setTheme] = useLocalStorage<Theme>(
+    "theme",
+    "dark"
   )
 
   function toggleTheme() {
-    setTheme((currentTheme) => {
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
-
-      localStorage.setItem('theme', newTheme)
-
-      return newTheme
-    })
+    setTheme(currentTheme =>
+      currentTheme === "dark" ? "light" : "dark"
+    )
   }
 
   return (
@@ -34,13 +32,13 @@ function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 function useTheme() {
-  const ctx = useContext(ThemeContext)
+  const context = useContext(ThemeContext)
 
-  if (!ctx) {
-    throw new Error('useTheme must be used inside ThemeProvider')
+  if (!context) {
+    throw new Error("useTheme must be used inside ThemeProvider")
   }
 
-  return ctx
+  return context
 }
 
 export { ThemeProvider, useTheme }

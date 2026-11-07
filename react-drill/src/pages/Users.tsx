@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import type { User } from '../types'
 import { useTheme } from '../context/ThemeContext'
+import useLocalStorage from "../hooks/useLocalStorage"
 
 function Users() {
   const { theme } = useTheme()
@@ -10,7 +11,10 @@ function Users() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+ const [search, setSearch] = useLocalStorage<string>(
+  "users-search",
+  ""
+)
 
   useEffect(() => {
     fetch('https://jsonplaceholder.typicode.com/users')

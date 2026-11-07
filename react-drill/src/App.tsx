@@ -6,6 +6,7 @@ import Users from './pages/Users'
 import About from './pages/About'
 import UserDetail from './pages/UserDetail'
 import NotFound from './pages/NotFound'
+import TaskManager from './components/TaskManager'
 
 import { useTheme } from './context/ThemeContext'
 
@@ -69,6 +70,17 @@ function App() {
         </NavLink>
 
         <NavLink
+          to="/tasks"
+          className={({ isActive }) =>
+            `rounded-lg px-4 py-2 hover:bg-indigo-500 hover:text-white ${
+              isActive ? 'bg-indigo-500 text-white' : ''
+            }`
+          }
+        >
+          Tasks
+        </NavLink>
+
+        <NavLink
           to="/about"
           className={({ isActive }) =>
             `rounded-lg px-4 py-2 hover:bg-indigo-500 hover:text-white ${
@@ -92,6 +104,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/users" element={<Users />} />
           <Route path="/users/:id" element={<UserDetail />} />
+          <Route path="/tasks" element={<TaskManager />} />
           <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
