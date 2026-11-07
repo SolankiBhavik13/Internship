@@ -1,8 +1,11 @@
+
 import { Routes, Route, NavLink } from 'react-router'
 
 import Home from './pages/Home'
 import Users from './pages/Users'
 import About from './pages/About'
+import UserDetail from './pages/UserDetail'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -43,14 +46,15 @@ function App() {
       </nav>
 
       <main className="p-6">
-
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/users/:id" element={<UserDetail />} />
           <Route path="/about" element={<About />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-
       </main>
+
     </div>
   )
 }

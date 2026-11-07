@@ -1,7 +1,16 @@
-
-export type Student = {
-  id: string
+export type User = {
+  id: number
   name: string
-  rollNumber: string
-  validTill: number
+  username: string
+  email: string
+  phone: string
+  website: string
+  company: {
+    name: string
+    catchPhrase: string
+  }
+  address: {
+    street: string
+    city: string
+  }
 }

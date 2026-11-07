@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react'
 
-type User = {
-  id: number
-  name: string
-  email: string
-  company: {
-    catchPhrase: string
-  }
-}
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
+import type { User } from '../types'
 
 function Users() {
   const [users, setUsers] = useState<User[]>([])
@@ -31,8 +25,13 @@ function Users() {
     user.email.toLowerCase().includes(search.toLowerCase())
   )
 
-  if (loading) return <p>Loading users...</p>
-  if (error) return <p>{error}</p>
+  if (loading) {
+    return <p className="p-8 text-slate-400">Loading users...</p>
+  }
+
+  if (error) {
+    return <p className="p-8 text-red-400">{error}</p>
+  }
 
   return (
     <div>
@@ -43,27 +42,43 @@ function Users() {
         placeholder="Search by name or email"
         value={search}
         onChange={e => setSearch(e.target.value)}
-        className="w-full p-3 rounded-lg bg-slate-800 mb-5"
+        className="w-full p-3 rounded-lg bg-slate-800 mb-5 outline-none"
       />
 
-      <p className="mb-4">
+      <p className="mb-4 text-slate-300">
         Showing {filteredUsers.length} of {users.length} users
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
         {filteredUsers.map(user => (
-          <div key={user.id} className="bg-slate-800 p-5 rounded-xl">
-            <h2 className="text-xl font-bold">{user.name}</h2>
-            <p className="text-slate-300">{user.email}</p>
+          <Link
+            to={`/users/${user.id}`}
+            key={user.id}
+            className="block bg-slate-800 p-5 rounded-xl hover:bg-slate-700 transition"
+          >
+            <h2 className="text-xl font-bold">
+              {user.name}
+            </h2>
+
+            <p className="text-slate-300">
+              {user.email}
+            </p>
+
             <p className="mt-2 text-sm text-indigo-300">
               {user.company.catchPhrase}
             </p>
-          </div>
+
+            <p className="mt-3 text-sm text-indigo-400">
+              View Details →
+            </p>
+          </Link>
         ))}
       </div>
 
       {filteredUsers.length === 0 && (
-        <p>No users match your search - try another name.</p>
+        <p className="mt-5 text-slate-400">
+          No users match your search - try another name.
+        </p>
       )}
     </div>
   )
