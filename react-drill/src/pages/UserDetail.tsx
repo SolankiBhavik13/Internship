@@ -14,7 +14,6 @@ function UserDetail() {
      setLoading(true)
     setError(null)
     setUser(null)
-    
     async function load() {
       try {
         if (!id || !/^[1-9]\d*$/.test(id)) {
