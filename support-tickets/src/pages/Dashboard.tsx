@@ -1,9 +1,7 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-
 import PageHeader from "../components/ui/PageHeader";
-
 import type { Ticket } from "../types/database";
 
 import {
@@ -12,206 +10,159 @@ import {
   CATEGORY_COLORS,
 } from "../data/constants";
 
-type TicketSummary = Pick<
-  Ticket,
-  "id" | "subject" | "category" | "priority" | "status"
->;
-
 function Dashboard() {
-  const [ticketCount, setTicketCount] = useState<number>(0);
-
-  const [tickets, setTickets] = useState<TicketSummary[]>([]);
-
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchDashboardData() {
+    async function fetchTickets() {
       setLoading(true);
       setError(null);
 
-      const [countResult, ticketsResult] = await Promise.all([
-        supabase
-          .from("tickets")
-          .select("*", { count: "exact", head: true }),
+      const { data, error: dbError } = await supabase
+        .from("tickets")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        supabase
-          .from("tickets")
-          .select("id, subject, category, priority, status")
-          .order("created_at", { ascending: false }),
-      ]);
-
-      if (countResult.error) {
-        setError(countResult.error.message);
-      } else {
-        setTicketCount(countResult.count ?? 0);
-      }
-
-      if (ticketsResult.error) {
-        setError(
-          ticketsResult.error.message
-        );
-      } else {
-        setTickets(
-          (ticketsResult.data ?? []) as TicketSummary[]
-        );
+      if (dbError) {
+        setError(dbError.message);
+      } else if (data) {
+        setTickets(data as unknown as Ticket[]);
       }
 
       setLoading(false);
     }
 
-    fetchDashboardData();
+    fetchTickets();
   }, []);
 
-  const inProgressCount = tickets.filter(
-    (ticket) => ticket.status === "in_progress"
-  ).length;
-
-  const resolvedCount = tickets.filter(
-    (ticket) => ticket.status === "resolved"
-  ).length;
-
   return (
-    
-    <div className="mx-auto max-w-7xl px-6 py-12">
+    <div>
       <PageHeader
-    title="Agent Dashboard"
-    subtitle="Manage and track customer support tickets."
-    />
-      {/* Dashboard Heading */}
-      <h1 className="text-3xl font-bold text-slate-900">
-        Agent Dashboard
-      </h1>
+        title="Tickets"
+        subtitle="Every customer problem, newest first - AI already triaged them"
+      />
 
-      <p className="mt-2 text-slate-600">
-        Manage and track customer support tickets.
+      {/* Ticket Count */}
+      <p className="mb-6 text-sm text-slate-400">
+        {tickets.length} {tickets.length === 1 ? "open ticket" : "open tickets"}
       </p>
 
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-600 border-t-blue-500"></div>
+          <p className="mt-4 text-slate-400">Loading tickets...</p>
+        </div>
+      ) : error ? (
 
-      {/* Dashboard Statistics */}
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
+        /* Error State */
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-400">
+          Failed to load tickets: {error}
+        </div>
 
-        {/* Total Tickets */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-500">
-            Total Tickets
-          </p>
+      ) : tickets.length === 0 ? (
 
-          <h2 className="mt-2 text-3xl font-bold">
-            {loading ? "Loading..." : ticketCount}
+        /* Empty State */
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-12 text-center">
+          <div className="mb-4 text-5xl">🎫</div>
+          <h2 className="text-xl font-semibold text-white">
+            No tickets yet
           </h2>
+          <p className="mt-2 text-slate-400">
+            No tickets yet - submit one from the home page.
+          </p>
         </div>
 
+      ) : (
 
-        {/* In Progress Tickets */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-500">
-            In Progress
-          </p>
+        /* Tickets Table */
+        <div className="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900">
+          <table className="w-full min-w-[900px] text-left">
+            <thead className="border-b border-slate-700 bg-slate-800">
+              <tr>
+                <th className="px-5 py-4 text-sm font-semibold text-slate-300">
+                  Subject
+                </th>
+                <th className="px-5 py-4 text-sm font-semibold text-slate-300">
+                  Customer
+                </th>
+                <th className="px-5 py-4 text-right text-sm font-semibold text-slate-300">
+                  Category
+                </th>
+                <th className="px-5 py-4 text-right text-sm font-semibold text-slate-300">
+                  Priority
+                </th>
+                <th className="px-5 py-4 text-right text-sm font-semibold text-slate-300">
+                  Status
+                </th>
+                <th className="px-5 py-4 text-right text-sm font-semibold text-slate-300">
+                  Created
+                </th>
+              </tr>
+            </thead>
 
-          <h2 className="mt-2 text-3xl font-bold">
-            {loading ? "Loading..." : inProgressCount}
-          </h2>
-        </div>
+            <tbody className="divide-y divide-slate-800">
+              {tickets.map((ticket) => (
+                <tr
+                  key={ticket.id}
+                  className="transition-colors hover:bg-slate-800/50"
+                >
+                  {/* Subject */}
+                  <td className="px-5 py-4">
+                    <p className="font-medium text-white">
+                      {ticket.subject}
+                    </p>
+                  </td>
 
-
-        {/* Resolved Tickets */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-500">
-            Resolved Tickets
-          </p>
-
-          <h2 className="mt-2 text-3xl font-bold">
-            {loading ? "Loading..." : resolvedCount}
-          </h2>
-        </div>
-
-      </div>
-
-
-      {/* Error Message */}
-      {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-          Failed to fetch tickets: {error}
-        </div>
-      )}
-
-
-      {/* All Support Tickets */}
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-8">
-
-        <h2 className="text-xl font-semibold">
-          All Support Tickets
-        </h2>
-
-        {loading ? (
-          <p className="mt-4 text-slate-500">
-            Loading tickets...
-          </p>
-        ) : error ? (
-          <p className="mt-4 text-slate-500">
-            Unable to load tickets.
-          </p>
-        ) : tickets.length === 0 ? (
-          <p className="mt-4 text-slate-500">
-            No tickets found.
-          </p>
-        ) : (
-
-          <div className="mt-6 space-y-4">
-
-            {tickets.map((ticket) => (
-
-              <div
-                key={ticket.id}
-                className="rounded-xl border border-slate-200 p-5 transition hover:shadow-md"
-              >
-
-                {/* Ticket Subject */}
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {ticket.subject}
-                </h3>
-
-
-                {/* Ticket Badges */}
-                <div className="mt-4 flex flex-wrap gap-3">
+                  {/* Customer */}
+                  <td className="px-5 py-4">
+                    <p className="text-sm font-medium text-slate-200">
+                      {ticket.customer_name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {ticket.customer_email}
+                    </p>
+                  </td>
 
                   {/* Category */}
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${CATEGORY_COLORS[ticket.category]}`}
-                  >
-                    {ticket.category}
-                  </span>
-
+                  <td className="px-5 py-4 text-right">
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${CATEGORY_COLORS[ticket.category]}`}
+                    >
+                      {ticket.category}
+                    </span>
+                  </td>
 
                   {/* Priority */}
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${PRIORITY_COLORS[ticket.priority]}`}
-                  >
-                    {ticket.priority}
-                  </span>
-
+                  <td className="px-5 py-4 text-right">
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${PRIORITY_COLORS[ticket.priority]}`}
+                    >
+                      {ticket.priority}
+                    </span>
+                  </td>
 
                   {/* Status */}
-                  <span
-                    className={`rounded-full px-3 py-1 text-sm font-medium ${STATUS_COLORS[ticket.status]}`}
-                  >
-                    {ticket.status.replace("_", " ")}
-                  </span>
+                  <td className="px-5 py-4 text-right">
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[ticket.status]}`}
+                    >
+                      {ticket.status.replace("_", " ")}
+                    </span>
+                  </td>
 
-                </div>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        )}
-
-      </div>
-
+                  {/* Created Date */}
+                  <td className="px-5 py-4 text-right text-sm text-slate-400">
+                    {new Date(ticket.created_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
