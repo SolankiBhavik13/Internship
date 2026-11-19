@@ -1,6 +1,12 @@
+import PageHeader from "../components/ui/PageHeader";
+
 function Login() {
   return (
     <div className="mx-auto max-w-lg px-6 py-20">
+      <PageHeader
+      title="Agent Login"
+      subtitle="sign in to your account to manage customer support tickets"
+      />
       <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-3xl font-bold text-slate-900">
           Agent Login

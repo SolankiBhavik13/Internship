@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
+import PageHeader from "../components/ui/PageHeader";
+
 import type { Ticket } from "../types/database";
 
 import {
@@ -71,8 +73,12 @@ function Dashboard() {
   ).length;
 
   return (
+    
     <div className="mx-auto max-w-7xl px-6 py-12">
-
+      <PageHeader
+    title="Agent Dashboard"
+    subtitle="Manage and track customer support tickets."
+    />
       {/* Dashboard Heading */}
       <h1 className="text-3xl font-bold text-slate-900">
         Agent Dashboard

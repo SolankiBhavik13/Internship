@@ -1,6 +1,12 @@
+import PageHeader from "../components/ui/PageHeader";
+
 function Home() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-20">
+      <PageHeader
+      title="Submit a Ticket"
+      subtitle="Tell us about your problem and our team will help you."
+      />
       <div className="text-center">
         <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-blue-600">
           Customer Support

@@ -1,10 +1,17 @@
 import { useParams } from "react-router";
 
+import PageHeader from "../components/ui/PageHeader";
+
 function TicketDetail() {
   const { id } = useParams();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
+      <PageHeader
+      title="Ticket Details"
+      subtitle="View ticket information and manage customer support requests"
+      />
+      
       <h1 className="text-3xl font-bold text-slate-900">
         Ticket Details
       </h1>
