@@ -73,3 +73,27 @@ export default defineConfig([
 ])
 
 ```
+
+## Submit Ticket Flow - QA and Polish
+
+The Submit Ticket page includes:
+
+- Form validation for name, email, subject and description.
+- Email trimming and lowercase normalization.
+- Description character counter.
+- Soft warning for descriptions longer than 5,000 characters.
+- Loading indicator during submission.
+- Protection against duplicate submissions.
+- Success and error messages.
+- Responsive layout for mobile screens.
+- Keyboard accessibility.
+
+### Screenshots
+
+Add screenshots of:
+
+1. Submit Ticket page.
+2. Form validation errors.
+3. Successful ticket submission.
+4. Dashboard showing the submitted ticket.
+5. Mobile responsive layout.

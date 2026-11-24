@@ -2,7 +2,7 @@
 import { useState, useRef } from "react"
 import type { FormEvent } from "react"
 
-import supabase  from "../lib/supabaseClient"
+import supabase from "../lib/supabaseClient"
 import { triageTicket } from "../lib/triage"
 import { TICKET_STATUS } from "../data/constants"
 
@@ -35,20 +35,18 @@ const initialForm: FormState = {
   description: "",
 }
 
+const SOFT_DESCRIPTION_LIMIT = 5000
+
 export default function Home() {
   const [form, setForm] = useState<FormState>(initialForm)
-
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSaving, setIsSaving] = useState(false)
-
   const [submitError, setSubmitError] = useState("")
   const [submitted, setSubmitted] =
     useState<SubmittedTicket | null>(null)
 
-  // Prevent multiple submissions
   const submittingRef = useRef(false)
 
-  // Update individual form fields
   function setField(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
 
@@ -60,23 +58,28 @@ export default function Home() {
     setSubmitError("")
   }
 
-  // Validate form
   function validateForm() {
     const newErrors: FormErrors = {}
 
-    if (form.name.trim().length < 2) {
+    const name = form.name.trim()
+    const email = form.email.trim()
+    const subject = form.subject.trim()
+    const description = form.description.trim()
+
+    if (name.length < 2) {
       newErrors.name = "Name must be at least 2 characters."
     }
 
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+    // Validate email and store it in lowercase later.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address."
     }
 
-    if (form.subject.trim().length < 5) {
+    if (subject.length < 5) {
       newErrors.subject = "Subject must be at least 5 characters."
     }
 
-    if (form.description.trim().length < 30) {
+    if (description.length < 30) {
       newErrors.description =
         "Description must be at least 30 characters."
     }
@@ -86,7 +89,6 @@ export default function Home() {
     return Object.keys(newErrors).length === 0
   }
 
-  // Submit ticket to Supabase
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
@@ -99,20 +101,25 @@ export default function Home() {
     setSubmitError("")
 
     try {
-      // Step 1: Run AI triage
+      const cleanName = form.name.trim()
+      const cleanEmail = form.email.trim().toLowerCase()
+      const cleanSubject = form.subject.trim()
+      const cleanDescription = form.description.trim()
+
+      // Step 1: Run AI triage.
       const triage = await triageTicket(
-        form.subject.trim(),
-        form.description.trim()
+        cleanSubject,
+        cleanDescription
       )
 
-      // Step 2: Insert ticket into Supabase
+      // Step 2: Insert ticket into Supabase.
       const { data: ticket, error: ticketError } = await supabase
         .from("tickets")
         .insert({
-          customer_name: form.name.trim(),
-          customer_email: form.email.trim().toLowerCase(),
-          subject: form.subject.trim(),
-          description: form.description.trim(),
+          customer_name: cleanName,
+          customer_email: cleanEmail,
+          subject: cleanSubject,
+          description: cleanDescription,
           category: triage.category,
           priority: triage.priority,
           status: TICKET_STATUS.OPEN,
@@ -120,18 +127,15 @@ export default function Home() {
         .select()
         .single()
 
-      // Stop if ticket insertion fails
       if (ticketError || !ticket) {
         console.error("Ticket insertion failed:", ticketError)
-
         setSubmitError(
           "We couldn't submit your ticket right now. Please try again."
         )
-
         return
       }
 
-      // Step 3: Insert AI log linked to ticket
+      // Step 3: Insert AI log.
       const { error: logError } = await supabase
         .from("ai_logs")
         .insert({
@@ -141,12 +145,11 @@ export default function Home() {
           ai_reasoning: triage.reasoning,
         })
 
-      // Log failure but keep the successful ticket
       if (logError) {
         console.error("AI log insertion failed:", logError)
       }
 
-      // Step 4: Store confirmation information
+      // Step 4: Show confirmation.
       setSubmitted({
         id: ticket.id,
         subject: ticket.subject,
@@ -155,10 +158,8 @@ export default function Home() {
         reasoning: triage.reasoning,
       })
 
-      // Step 5: Reset form after successful ticket insertion
       setForm({ ...initialForm })
       setErrors({})
-
     } catch (error) {
       console.error("Submission error:", error)
 
@@ -171,7 +172,6 @@ export default function Home() {
     }
   }
 
-  // Submit another ticket
   function handleNewTicket() {
     setForm({ ...initialForm })
     setErrors({})
@@ -226,8 +226,7 @@ export default function Home() {
             </p>
 
             <p className="text-slate-400 text-sm leading-6 mb-6">
-              Our AI is reviewing your ticket - you will see its
-              category and priority on the confirmation shortly.
+              Our AI has reviewed your ticket.
             </p>
 
             <div className="bg-slate-800 rounded-lg p-4 mb-6">
@@ -271,18 +270,18 @@ export default function Home() {
               <div className="grid sm:grid-cols-2 gap-4">
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">
+                  <label htmlFor="customer-name" className="block text-sm text-slate-400 mb-2">
                     Customer Name
                   </label>
 
                   <input
+                    id="customer-name"
                     type="text"
                     value={form.name}
-                    onChange={(e) =>
-                      setField("name", e.target.value)
-                    }
+                    onChange={(e) => setField("name", e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isSaving}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   />
 
                   {errors.name && (
@@ -293,18 +292,18 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 mb-2">
+                  <label htmlFor="customer-email" className="block text-sm text-slate-400 mb-2">
                     Customer Email
                   </label>
 
                   <input
+                    id="customer-email"
                     type="email"
                     value={form.email}
-                    onChange={(e) =>
-                      setField("email", e.target.value)
-                    }
+                    onChange={(e) => setField("email", e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isSaving}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   />
 
                   {errors.email && (
@@ -318,18 +317,18 @@ export default function Home() {
 
               {/* Subject */}
               <div>
-                <label className="block text-sm text-slate-400 mb-2">
+                <label htmlFor="ticket-subject" className="block text-sm text-slate-400 mb-2">
                   Subject
                 </label>
 
                 <input
+                  id="ticket-subject"
                   type="text"
                   value={form.subject}
-                  onChange={(e) =>
-                    setField("subject", e.target.value)
-                  }
+                  onChange={(e) => setField("subject", e.target.value)}
                   placeholder="Enter ticket subject"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isSaving}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 />
 
                 {errors.subject && (
@@ -341,18 +340,18 @@ export default function Home() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm text-slate-400 mb-2">
+                <label htmlFor="ticket-description" className="block text-sm text-slate-400 mb-2">
                   Description
                 </label>
 
                 <textarea
+                  id="ticket-description"
                   rows={6}
                   value={form.description}
-                  onChange={(e) =>
-                    setField("description", e.target.value)
-                  }
+                  onChange={(e) => setField("description", e.target.value)}
                   placeholder="Describe your issue in detail..."
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                  disabled={isSaving}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 resize-y disabled:opacity-50"
                 />
 
                 {errors.description && (
@@ -361,23 +360,52 @@ export default function Home() {
                   </p>
                 )}
 
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex flex-wrap justify-between items-center gap-2 mt-2">
                   <p className="text-xs text-slate-500">
                     The more detail you give, the better the AI can triage.
                   </p>
 
-                  <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                  <span className="text-xs text-slate-400 whitespace-nowrap">
                     {form.description.length} characters
                   </span>
                 </div>
+
+                {form.description.length > SOFT_DESCRIPTION_LIMIT && (
+                  <p className="text-sm text-amber-400 mt-2">
+                    Very long description - consider summarizing.
+                  </p>
+                )}
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
               >
+                {isSaving && (
+                  <svg
+                    className="h-5 w-5 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                )}
+
                 {isSaving ? "Submitting..." : "Submit Ticket"}
               </button>
 
