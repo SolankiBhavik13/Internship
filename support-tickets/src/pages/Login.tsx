@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
 
 import PageHeader from "../components/ui/PageHeader";
 import supabase from "../lib/supabaseClient";
@@ -18,6 +18,14 @@ type FormState = {
 function Login() {
   const { session, loading } = useAuth();
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Remember the page the user wanted to visit
+  const from =
+    (location.state as { from?: { pathname?: string } } | null)
+      ?.from?.pathname ?? "/dashboard";
+
   const [mode, setMode] = useState<AuthMode>("signin");
 
   const [form, setForm] = useState<FormState>({
@@ -30,7 +38,7 @@ function Login() {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect already signed-in users to dashboard
+  // Wait until authentication status is checked
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -39,8 +47,9 @@ function Login() {
     );
   }
 
+  // Redirect already signed-in users
   if (session) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={from} replace />;
   }
 
   function handleChange(field: keyof FormState, value: string) {
@@ -59,12 +68,15 @@ function Login() {
     setError("");
     setSuccess("");
 
+    // Validate name during signup
     if (mode === "signup" && form.name.trim().length < 2) {
       setError("Name must contain at least 2 characters.");
       return;
     }
 
+    // Validate email
     const email = form.email.trim().toLowerCase();
+
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(email)) {
@@ -72,6 +84,7 @@ function Login() {
       return;
     }
 
+    // Validate password
     if (form.password.length < 8) {
       setError("Password must contain at least 8 characters.");
       return;
@@ -81,6 +94,7 @@ function Login() {
 
     try {
       if (mode === "signup") {
+        // Create authentication user
         const { data, error: authError } =
           await supabase.auth.signUp({
             email,
@@ -93,6 +107,7 @@ function Login() {
           throw new Error("Unable to create authentication user.");
         }
 
+        // Create agent profile
         const { error: profileError } = await supabase
           .from("agents")
           .insert({
@@ -106,6 +121,7 @@ function Login() {
 
         setSuccess("Account created successfully!");
       } else {
+        // Sign in existing user
         const { error: authError } =
           await supabase.auth.signInWithPassword({
             email,
@@ -117,11 +133,16 @@ function Login() {
         setSuccess("Signed in successfully!");
       }
 
+      // Clear form after successful authentication
       setForm({
         name: "",
         email: "",
         password: "",
       });
+
+      // Return to the originally requested page
+      navigate(from, { replace: true });
+
     } catch (err) {
       console.error("Authentication error:", err);
 
@@ -153,9 +174,11 @@ function Login() {
             : "Create your agent account to get started."}
         </p>
 
+        {/* Mode Toggle */}
         <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={() => {
               setMode("signin");
               setError("");
@@ -165,13 +188,14 @@ function Login() {
               mode === "signin"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             Sign In
           </button>
 
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={() => {
               setMode("signup");
               setError("");
@@ -181,13 +205,16 @@ function Login() {
               mode === "signup"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-600 hover:text-slate-900"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             Sign Up
           </button>
         </div>
 
+        {/* Authentication Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+
+          {/* Name - Signup Only */}
           {mode === "signup" && (
             <div>
               <label className="mb-2 block font-medium text-slate-700">
@@ -197,7 +224,9 @@ function Login() {
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                onChange={(e) =>
+                  handleChange("name", e.target.value)
+                }
                 placeholder="Enter your name"
                 disabled={isSubmitting}
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-slate-100"
@@ -205,6 +234,7 @@ function Login() {
             </div>
           )}
 
+          {/* Email */}
           <div>
             <label className="mb-2 block font-medium text-slate-700">
               Email Address
@@ -213,13 +243,16 @@ function Login() {
             <input
               type="email"
               value={form.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              onChange={(e) =>
+                handleChange("email", e.target.value)
+              }
               placeholder="agent@example.com"
               disabled={isSubmitting}
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-slate-100"
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="mb-2 block font-medium text-slate-700">
               Password
@@ -228,25 +261,34 @@ function Login() {
             <input
               type="password"
               value={form.password}
-              onChange={(e) => handleChange("password", e.target.value)}
+              onChange={(e) =>
+                handleChange("password", e.target.value)
+              }
               placeholder="Enter your password"
               disabled={isSubmitting}
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-slate-100"
             />
           </div>
 
+          {/* Error Message */}
           {error && (
-            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <p
+              role="alert"
+              className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600"
+            >
+              <span aria-hidden="true">⚠</span>
               {error}
             </p>
           )}
 
+          {/* Success Message */}
           {success && (
             <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
               {success}
             </p>
           )}
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}

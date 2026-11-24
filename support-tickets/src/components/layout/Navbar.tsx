@@ -1,5 +1,6 @@
 
 import { NavLink, Link } from "react-router";
+
 import { useAuth } from "../../context/AuthContext";
 import supabase from "../../lib/supabaseClient";
 
@@ -38,6 +39,7 @@ function Navbar() {
 
         {/* Navigation Links */}
         <div className="flex flex-wrap items-center gap-2">
+
           <NavLink to="/" end className={navLinkClass}>
             Submit a Ticket
           </NavLink>
@@ -48,10 +50,12 @@ function Navbar() {
                 Dashboard
               </NavLink>
 
+              {/* Signed-in Agent Name */}
               <span className="px-3 py-2 text-sm font-medium text-white">
                 {agent?.name ?? "Loading agent..."}
               </span>
 
+              {/* Sign Out */}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -65,6 +69,7 @@ function Navbar() {
               Agent Login
             </NavLink>
           )}
+
         </div>
       </div>
     </nav>
