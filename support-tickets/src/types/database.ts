@@ -1,33 +1,34 @@
 
-export type AgentRole = "agent" | "admin"
+// Ticket Categories
+export const TICKET_CATEGORY = {
+  BILLING: "billing",
+  TECHNICAL: "technical",
+  ACCOUNT: "account",
+  OTHER: "other",
+} as const
 
 export type TicketCategory =
-  | "billing"
-  | "technical"
-  | "account"
-  | "other"
+  (typeof TICKET_CATEGORY)[keyof typeof TICKET_CATEGORY]
+
+// Ticket Priorities
+export const TICKET_PRIORITY = {
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+  URGENT: "urgent",
+} as const
 
 export type TicketPriority =
-  | "low"
-  | "medium"
-  | "high"
-  | "urgent"
+  (typeof TICKET_PRIORITY)[keyof typeof TICKET_PRIORITY]
 
+// Ticket Status
 export type TicketStatus =
   | "open"
   | "in_progress"
   | "resolved"
 
-
-export interface Agent {
-  id: string
-  name: string
-  email: string
-  role: AgentRole
-}
-
-
-export interface Ticket {
+// Ticket Type
+export type Ticket = {
   id: string
   customer_name: string
   customer_email: string
@@ -37,24 +38,5 @@ export interface Ticket {
   priority: TicketPriority
   status: TicketStatus
   assigned_to: string | null
-  created_at: string
-}
-
-
-export interface TicketComment {
-  id: string
-  ticket_id: string
-  agent_id: string | null
-  comment: string
-  created_at: string
-}
-
-
-export interface AiLog {
-  id: string
-  ticket_id: string
-  ai_category: TicketCategory
-  ai_priority: TicketPriority
-  ai_reasoning: string
   created_at: string
 }

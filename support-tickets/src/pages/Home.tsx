@@ -1,5 +1,7 @@
 
 import { useState } from "react"
+import type { FormEvent } from "react"
+import { triageTicket } from "../lib/triage"
 
 type FormState = {
   name: string
@@ -7,6 +9,8 @@ type FormState = {
   subject: string
   description: string
 }
+
+type FormErrors = Partial<Record<keyof FormState, string>>
 
 export default function Home() {
   const [form, setForm] = useState<FormState>({
@@ -16,13 +20,77 @@ export default function Home() {
     description: "",
   })
 
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Update one field
   function setField(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }))
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Validate form
+  function validateForm() {
+    const newErrors: FormErrors = {}
+
+    if (form.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters."
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      newErrors.email = "Please enter a valid email address."
+    }
+
+    if (form.subject.trim().length < 5) {
+      newErrors.subject = "Subject must be at least 5 characters."
+    }
+
+    if (form.description.trim().length < 30) {
+      newErrors.description =
+        "Description must be at least 30 characters."
+    }
+
+    setErrors(newErrors)
+
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Submit form
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    console.log(form)
+
+    if (isSaving) return
+
+    if (!validateForm()) {
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      const decision = await triageTicket(
+        form.subject,
+        form.description
+      )
+
+      const ticket = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        subject: form.subject.trim(),
+        description: form.description.trim(),
+      }
+
+      console.log("Submitted Ticket:", {
+        ticket,
+        decision,
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -64,6 +132,12 @@ export default function Home() {
                   placeholder="Enter your name"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
+                {errors.name && (
+                  <p className="text-sm text-red-400 mt-1">
+                    {errors.name}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -78,6 +152,12 @@ export default function Home() {
                   placeholder="Enter your email"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
+                {errors.email && (
+                  <p className="text-sm text-red-400 mt-1">
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
             </div>
@@ -95,6 +175,12 @@ export default function Home() {
                 placeholder="Enter ticket subject"
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
+
+              {errors.subject && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.subject}
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -111,6 +197,12 @@ export default function Home() {
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 resize-y"
               />
 
+              {errors.description && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.description}
+                </p>
+              )}
+
               <div className="flex justify-between items-center mt-2">
                 <p className="text-xs text-slate-500">
                   The more detail you give, the better the AI can triage.
@@ -125,9 +217,10 @@ export default function Home() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
+              disabled={isSaving}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
             >
-              Submit Ticket
+              {isSaving ? "Submitting..." : "Submit Ticket"}
             </button>
 
           </form>
