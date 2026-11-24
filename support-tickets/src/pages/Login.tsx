@@ -1,12 +1,27 @@
-import PageHeader from "../components/ui/PageHeader";
+
+import PageHeader from "../components/ui/PageHeader"
+import { useEffect } from "react"
+import supabase from "../lib/supabaseClient"
 
 function Login() {
+  useEffect(() => {
+    async function checkSession() {
+      const { data, error } = await supabase.auth.getSession()
+
+      console.log("Current session:", data)
+      console.log("Session error:", error)
+    }
+
+    checkSession()
+  }, [])
+
   return (
     <div className="mx-auto max-w-lg px-6 py-20">
       <PageHeader
-      title="Agent Login"
-      subtitle="sign in to your account to manage customer support tickets"
+        title="Agent Login"
+        subtitle="Sign in to your account to manage customer support tickets"
       />
+
       <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-3xl font-bold text-slate-900">
           Agent Login
@@ -54,7 +69,7 @@ function Login() {
         </p>
       </div>
     </div>
-  );
+  )
 }
 
-export default Login;
+export default Login
