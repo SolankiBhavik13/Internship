@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
@@ -21,7 +20,6 @@ function Login() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Remember the page the user wanted to visit
   const from =
     (location.state as { from?: { pathname?: string } } | null)
       ?.from?.pathname ?? "/dashboard";
@@ -38,7 +36,6 @@ function Login() {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Wait until authentication status is checked
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -47,7 +44,6 @@ function Login() {
     );
   }
 
-  // Redirect already signed-in users
   if (session) {
     return <Navigate to={from} replace />;
   }
@@ -62,21 +58,24 @@ function Login() {
     setSuccess("");
   }
 
+  function changeMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    setError("");
+    setSuccess("");
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setError("");
     setSuccess("");
 
-    // Validate name during signup
     if (mode === "signup" && form.name.trim().length < 2) {
       setError("Name must contain at least 2 characters.");
       return;
     }
 
-    // Validate email
     const email = form.email.trim().toLowerCase();
-
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(email)) {
@@ -84,9 +83,8 @@ function Login() {
       return;
     }
 
-    // Validate password
     if (form.password.length < 8) {
-      setError("Password must contain at least 8 characters.");
+      setError("Password needs at least 8 characters.");
       return;
     }
 
@@ -94,20 +92,38 @@ function Login() {
 
     try {
       if (mode === "signup") {
-        // Create authentication user
         const { data, error: authError } =
           await supabase.auth.signUp({
             email,
             password: form.password,
           });
 
-        if (authError) throw authError;
+        if (authError) {
+          const message = authError.message.toLowerCase();
 
-        if (!data.user) {
-          throw new Error("Unable to create authentication user.");
+          if (
+            message.includes("already registered") ||
+            message.includes("already exists") ||
+            message.includes("already been registered")
+          ) {
+            throw new Error("That email already has an account.");
+          }
+
+          throw authError;
         }
 
-        // Create agent profile
+        if (!data.user) {
+          throw new Error("Unable to create the authentication account.");
+        }
+
+        // Supabase can return an empty identities array for an existing email.
+        if (
+          data.user.identities &&
+          data.user.identities.length === 0
+        ) {
+          throw new Error("That email already has an account.");
+        }
+
         const { error: profileError } = await supabase
           .from("agents")
           .insert({
@@ -117,39 +133,68 @@ function Login() {
             role: "agent",
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          throw profileError;
+        }
 
-        setSuccess("Account created successfully!");
+        // If email confirmation is enabled, the user must confirm first.
+        if (!data.session) {
+          setSuccess(
+            "Account created. Check your email to confirm your account."
+          );
+
+          setForm({
+            name: "",
+            email: "",
+            password: "",
+          });
+
+          return;
+        }
       } else {
-        // Sign in existing user
         const { error: authError } =
           await supabase.auth.signInWithPassword({
             email,
             password: form.password,
           });
 
-        if (authError) throw authError;
+        if (authError) {
+          const message = authError.message.toLowerCase();
 
-        setSuccess("Signed in successfully!");
+          if (message.includes("invalid login credentials")) {
+            throw new Error("Invalid login credentials.");
+          }
+
+          throw authError;
+        }
       }
 
-      // Clear form after successful authentication
       setForm({
         name: "",
         email: "",
         password: "",
       });
 
-      // Return to the originally requested page
       navigate(from, { replace: true });
-
     } catch (err) {
       console.error("Authentication error:", err);
 
       if (err instanceof Error) {
-        setError(err.message);
+        const message = err.message.toLowerCase();
+
+        if (
+          mode === "signup" &&
+          (message.includes("already registered") ||
+            message.includes("already exists"))
+        ) {
+          setError("That email already has an account.");
+        } else if (message.includes("invalid login credentials")) {
+          setError("Invalid login credentials.");
+        } else {
+          setError(err.message);
+        }
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Authentication failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -174,16 +219,11 @@ function Login() {
             : "Create your agent account to get started."}
         </p>
 
-        {/* Mode Toggle */}
         <div className="mt-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
           <button
             type="button"
             disabled={isSubmitting}
-            onClick={() => {
-              setMode("signin");
-              setError("");
-              setSuccess("");
-            }}
+            onClick={() => changeMode("signin")}
             className={`rounded-md px-4 py-2 font-medium transition ${
               mode === "signin"
                 ? "bg-white text-blue-600 shadow-sm"
@@ -196,11 +236,7 @@ function Login() {
           <button
             type="button"
             disabled={isSubmitting}
-            onClick={() => {
-              setMode("signup");
-              setError("");
-              setSuccess("");
-            }}
+            onClick={() => changeMode("signup")}
             className={`rounded-md px-4 py-2 font-medium transition ${
               mode === "signup"
                 ? "bg-white text-blue-600 shadow-sm"
@@ -211,17 +247,18 @@ function Login() {
           </button>
         </div>
 
-        {/* Authentication Form */}
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-
-          {/* Name - Signup Only */}
           {mode === "signup" && (
             <div>
-              <label className="mb-2 block font-medium text-slate-700">
+              <label
+                htmlFor="name"
+                className="mb-2 block font-medium text-slate-700"
+              >
                 Full Name
               </label>
 
               <input
+                id="name"
                 type="text"
                 value={form.name}
                 onChange={(e) =>
@@ -234,43 +271,60 @@ function Login() {
             </div>
           )}
 
-          {/* Email */}
           <div>
-            <label className="mb-2 block font-medium text-slate-700">
+            <label
+              htmlFor="email"
+              className="mb-2 block font-medium text-slate-700"
+            >
               Email Address
             </label>
 
             <input
+              id="email"
               type="email"
               value={form.email}
               onChange={(e) =>
                 handleChange("email", e.target.value)
               }
               placeholder="agent@example.com"
+              autoComplete="email"
               disabled={isSubmitting}
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-slate-100"
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="mb-2 block font-medium text-slate-700">
+            <label
+              htmlFor="password"
+              className="mb-2 block font-medium text-slate-700"
+            >
               Password
             </label>
 
             <input
+              id="password"
               type="password"
               value={form.password}
               onChange={(e) =>
                 handleChange("password", e.target.value)
               }
               placeholder="Enter your password"
+              autoComplete={
+                mode === "signup"
+                  ? "new-password"
+                  : "current-password"
+              }
               disabled={isSubmitting}
               className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 disabled:bg-slate-100"
             />
+
+            {form.password.length < 8 && (
+              <p className="mt-2 text-sm text-amber-600">
+                Password needs at least 8 characters.
+              </p>
+            )}
           </div>
 
-          {/* Error Message */}
           {error && (
             <p
               role="alert"
@@ -281,14 +335,15 @@ function Login() {
             </p>
           )}
 
-          {/* Success Message */}
           {success && (
-            <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+            <p
+              role="status"
+              className="rounded-lg bg-green-50 p-3 text-sm text-green-700"
+            >
               {success}
             </p>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}

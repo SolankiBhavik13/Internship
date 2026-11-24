@@ -1,119 +1,128 @@
+/*
+Reflection:
+The whole application reacts to one signOut because AuthContext
+shares the authentication state with all its consumers.
+
+When signOut changes the session to null, the context value changes.
+Every component using useAuth re-renders with the updated session.
+That is why the Navbar and protected routes update automatically.
+*/
 
 import {
   createContext,
   useContext,
   useEffect,
   useState,
-} from "react"
+} from "react";
 
-import type { ReactNode } from "react"
-import type { Session } from "@supabase/supabase-js"
+import type { ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
 
-import supabase from "../lib/supabaseClient"
-import type { Agent } from "../types/database"
+import supabase from "../lib/supabaseClient";
+import type { Agent } from "../types/database";
 
 type AuthContextValue = {
-  session: Session | null
-  agent: Agent | null
-  loading: boolean
-}
+  session: Session | null;
+  agent: Agent | null;
+  loading: boolean;
+};
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({
   children,
 }: {
-  children: ReactNode
+  children: ReactNode;
 }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [agent, setAgent] = useState<Agent | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check the existing session and listen for authentication changes
+  // Get the existing session when the application starts.
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     async function getInitialSession() {
-      const { data, error } = await supabase.auth.getSession()
+      const { data, error } = await supabase.auth.getSession();
 
-      if (!mounted) return
+      if (!mounted) return;
 
       if (error) {
-        console.error("Session error:", error)
+        console.error("Session error:", error);
       }
 
-      setSession(data.session)
-      setLoading(false)
+      setSession(data.session);
+      setLoading(false);
     }
 
-    getInitialSession()
+    getInitialSession();
 
+    // Listen for sign-in and sign-out events.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession)
-    })
+      setSession(newSession);
+    });
 
     return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
-  }, [])
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  // Load the agent profile whenever the session changes
+  // Load the agent profile whenever the session changes.
   useEffect(() => {
-    let active = true
+    let active = true;
 
     async function loadAgent() {
       if (!session) {
-        setAgent(null)
-        return
+        setAgent(null);
+        return;
       }
 
       const { data, error } = await supabase
         .from("agents")
         .select("*")
         .eq("id", session.user.id)
-        .maybeSingle()
+        .maybeSingle();
 
-      if (!active) return
+      if (!active) return;
 
       if (error) {
-        console.error("Agent loading error:", error)
-        setAgent(null)
-        return
+        console.error("Agent loading error:", error);
+        setAgent(null);
+        return;
       }
 
-      setAgent((data as Agent) ?? null)
+      setAgent((data as Agent) ?? null);
     }
 
-    loadAgent()
+    loadAgent();
 
     return () => {
-      active = false
-    }
-  }, [session])
+      active = false;
+    };
+  }, [session]);
 
   const value: AuthContextValue = {
     session,
     agent,
     loading,
-  }
+  };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-// Custom hook to access authentication information
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider")
+    throw new Error("useAuth must be used inside AuthProvider");
   }
 
-  return context
+  return context;
 }

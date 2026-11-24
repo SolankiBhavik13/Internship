@@ -97,3 +97,35 @@ Add screenshots of:
 3. Successful ticket submission.
 4. Dashboard showing the submitted ticket.
 5. Mobile responsive layout.
+
+
+## Screen 2 — Agent Authentication
+
+TicketDesk provides authentication for support agents using Supabase Auth.
+
+### Sign In
+
+Agents can sign in using their registered email address and password.
+
+![Agent Sign In](screenshots/login-signin.png)
+
+### Sign Up
+
+New agents can create an account by entering their name, email address, and a password containing at least 8 characters.
+
+![Agent Sign Up](screenshots/login-signup.png)
+
+### Signed-in Navbar
+
+When an agent is signed in, the navbar displays the agent's name, Dashboard link, and Sign Out button.
+
+![Signed-in Navbar](screenshots/navbar-signed-in.png)
+
+### How Authentication Works
+
+1. When an agent signs up, Supabase Auth creates their authentication account.
+2. The application inserts a matching row into the `agents` table using the authentication user's ID, name, email, and role.
+3. `AuthContext` stores the current session and agent profile so components can access authentication state through `useAuth()`.
+4. `AuthedRoute` protects the dashboard and ticket detail pages by redirecting signed-out users to `/login`.
+5. The requested page is saved during that redirect, and after successful sign-in the agent is returned to that page.
+6. Email confirmation is disabled in the development Supabase project so new agents can sign in immediately while testing. Production should use an appropriate email-verification setup.

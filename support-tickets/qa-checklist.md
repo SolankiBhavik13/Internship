@@ -39,3 +39,32 @@
 - [ ] No console errors.
 - [ ] Ticket successfully appears in Supabase.
 - [ ] npm run build completes successfully.
+
+## Screen 2 — Agent Authentication QA
+
+### Signup
+- [ ] New agent can create an account.
+- [ ] Supabase Auth account is created.
+- [ ] Matching row is inserted into the `agents` table.
+- [ ] Existing email displays an honest error.
+- [ ] Password must contain at least 8 characters.
+
+### Sign In
+- [ ] Agent can sign in with valid credentials.
+- [ ] Incorrect credentials display "Invalid login credentials".
+- [ ] Password field uses the correct autocomplete value.
+
+### Sign Out
+- [ ] Sign Out button signs out the current agent.
+- [ ] Navbar updates after sign out.
+- [ ] Protected pages redirect signed-out users to login.
+
+### Session and Redirects
+- [ ] Refresh preserves the signed-in session.
+- [ ] Requested protected page is remembered.
+- [ ] Successful login returns the agent to the requested page.
+- [ ] Default login destination is `/dashboard`.
+
+### Final QA
+- [ ] Authentication flow tested twice.
+- [ ] `npm run build` completes without errors.
