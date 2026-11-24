@@ -1,3 +1,10 @@
+// Agent Type
+export type Agent = {
+  id: string;
+  name: string;
+  email: string;
+  role: "agent" | "admin";
+};
 
 // Ticket Categories
 export const TICKET_CATEGORY = {
@@ -5,10 +12,10 @@ export const TICKET_CATEGORY = {
   TECHNICAL: "technical",
   ACCOUNT: "account",
   OTHER: "other",
-} as const
+} as const;
 
 export type TicketCategory =
-  (typeof TICKET_CATEGORY)[keyof typeof TICKET_CATEGORY]
+  (typeof TICKET_CATEGORY)[keyof typeof TICKET_CATEGORY];
 
 // Ticket Priorities
 export const TICKET_PRIORITY = {
@@ -16,27 +23,27 @@ export const TICKET_PRIORITY = {
   MEDIUM: "medium",
   HIGH: "high",
   URGENT: "urgent",
-} as const
+} as const;
 
 export type TicketPriority =
-  (typeof TICKET_PRIORITY)[keyof typeof TICKET_PRIORITY]
+  (typeof TICKET_PRIORITY)[keyof typeof TICKET_PRIORITY];
 
 // Ticket Status
 export type TicketStatus =
   | "open"
   | "in_progress"
-  | "resolved"
+  | "resolved";
 
 // Ticket Type
 export type Ticket = {
-  id: string
-  customer_name: string
-  customer_email: string
-  subject: string
-  description: string
-  category: TicketCategory
-  priority: TicketPriority
-  status: TicketStatus
-  assigned_to: string | null
-  created_at: string
-}
+  id: string;
+  customer_name: string;
+  customer_email: string;
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  assigned_to: string | null;
+  created_at: string;
+};
