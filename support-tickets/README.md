@@ -129,3 +129,26 @@ When an agent is signed in, the navbar displays the agent's name, Dashboard link
 4. `AuthedRoute` protects the dashboard and ticket detail pages by redirecting signed-out users to `/login`.
 5. The requested page is saved during that redirect, and after successful sign-in the agent is returned to that page.
 6. Email confirmation is disabled in the development Supabase project so new agents can sign in immediately while testing. Production should use an appropriate email-verification setup.
+
+
+## Supabase Edge Function
+
+The `triage-ticket` Edge Function accepts a ticket ID,
+validates the request, and checks whether the Gemini API
+key is configured on the server.
+
+### Run locally
+
+```bash
+npx supabase start
+npx supabase functions serve triage-ticket
+```
+
+### Required secret
+
+`GEMINI_API_KEY`
+
+The Gemini API key is stored securely in Supabase Secrets
+and is never exposed to the frontend.
+
+No Gemini AI call is implemented yet.
